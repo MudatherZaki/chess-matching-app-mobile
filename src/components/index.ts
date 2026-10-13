@@ -5,6 +5,7 @@ export { LoadingSpinner, EmptyState } from './Feedback';
 export { Avatar, RatingBadge } from './Avatar';
 export { default as ProposalCard } from './ProposalCard';
 export { default as UserCard } from './UserCard';
+export { default as LinkedAccountCard } from './LinkedAccountCard';
 export { default as AppHeader, APP_NAME, BrandMark } from './AppHeader';
 export { Tag, Chip, Toggle, SegmentedControl, SectionHeader, IconTile, IconButton } from './UI';
 export type { SegmentOption } from './UI';

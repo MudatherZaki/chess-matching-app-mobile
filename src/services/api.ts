@@ -8,6 +8,8 @@ import {
   SetAvailabilityRequest,
   CreateProposalRequest,
   CreateMatchRequest,
+  LichessAuthorizeResponse,
+  LinkedAccount,
 } from '@/types';
 import { USE_MOCK_DATA, isMockId, mockApi } from '@/mocks';
 
@@ -138,6 +140,44 @@ class ApiClient {
       },
     );
     return response.data;
+  }
+
+  // ===== INTEGRATION ENDPOINTS =====
+
+  async startLichessAuth(): Promise<LichessAuthorizeResponse> {
+    const response = await this.instance.post('/api/v1/integrations/lichess/authorize', {});
+    return response.data;
+  }
+
+  async completeLichessAuth(code: string, state: string): Promise<LinkedAccount> {
+    const response = await this.instance.post('/api/v1/integrations/lichess/callback', {
+      code,
+      state,
+    });
+    return response.data;
+  }
+
+  async refreshLichess(): Promise<LinkedAccount> {
+    const response = await this.instance.post('/api/v1/integrations/lichess/refresh', {});
+    return response.data;
+  }
+
+  async unlinkLichess(): Promise<void> {
+    await this.instance.delete('/api/v1/integrations/lichess');
+  }
+
+  async linkChessCom(username: string): Promise<LinkedAccount> {
+    const response = await this.instance.put('/api/v1/integrations/chesscom', { username });
+    return response.data;
+  }
+
+  async refreshChessCom(): Promise<LinkedAccount> {
+    const response = await this.instance.post('/api/v1/integrations/chesscom/refresh', {});
+    return response.data;
+  }
+
+  async unlinkChessCom(): Promise<void> {
+    await this.instance.delete('/api/v1/integrations/chesscom');
   }
 
   // ===== AVAILABILITY ENDPOINTS =====

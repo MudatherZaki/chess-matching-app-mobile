@@ -13,6 +13,7 @@ export interface User {
   fideRating?: number;
   chessCom?: ChessRating;
   lichess?: ChessRating;
+  linkedAccounts?: LinkedAccount[];
   stats?: UserStats;
   createdAt: string;
   lastLogin?: string;
@@ -22,6 +23,41 @@ export interface ChessRating {
   username?: string;
   url?: string;
   rating?: number;
+}
+
+// External chess account: Lichess (verified via OAuth) or chess.com
+// (username only, unverified until chess.com OAuth is available)
+export type LinkedPlatform = 'lichess' | 'chesscom';
+
+export interface PlatformRating {
+  category: string; // bullet, blitz, rapid, classical, correspondence, daily, ...
+  rating: number;
+  best?: number; // peak rating (chess.com only)
+  games: number;
+  provisional: boolean;
+  progress?: number;
+}
+
+export interface LinkedAccount {
+  platform: LinkedPlatform;
+  username: string;
+  profileUrl: string;
+  title?: string;
+  verified: boolean;
+  ratings: PlatformRating[];
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  memberSince?: string;
+  lastSeenAt?: string;
+  connectedAt: string;
+  lastSyncedAt: string;
+}
+
+export interface LichessAuthorizeResponse {
+  authorizeUrl: string;
+  state: string;
 }
 
 export interface UserStats {
@@ -43,6 +79,7 @@ export interface UserPublicProfile {
   fideRating?: number;
   chessComRating?: number;
   lichessRating?: number;
+  linkedAccounts?: LinkedAccount[];
   stats?: UserStats;
 }
 
@@ -74,8 +111,6 @@ export interface UpdateProfileRequest {
   hasBoard?: boolean;
   fideId?: string;
   fideRating?: number;
-  chessComUsername?: string;
-  lichessUsername?: string;
 }
 
 // Location & Availability

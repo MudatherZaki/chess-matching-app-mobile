@@ -14,6 +14,7 @@ import {
   SegmentedControl,
   IconTile,
   Tag,
+  LinkedAccountCard,
 } from '@/components';
 import { colors, spacing, typography, radius } from '@/theme';
 
@@ -163,7 +164,32 @@ export default function ProfileScreen({ navigation }: Props) {
           </Card>
         </View>
 
-        <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('MatchHistory')}>
+        <View style={styles.section}>
+          <SectionHeader title="Online Accounts" icon="link-variant" color={colors.warning} />
+          {user.linkedAccounts?.length ? (
+            user.linkedAccounts.map(account => (
+              <View key={account.platform} style={styles.linkedAccount}>
+                <LinkedAccountCard account={account} />
+              </View>
+            ))
+          ) : (
+            <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('EditProfile')}>
+              <Card style={styles.row}>
+                <IconTile icon="chess-knight" color={colors.warning} />
+                <View style={styles.gearInfo}>
+                  <Text style={styles.rowTitle}>Link Lichess or Chess.com</Text>
+                  <Text style={styles.rowSub}>Show your online ratings on your profile</Text>
+                </View>
+                <Icon name="chevron-right" size={20} color={colors.textTertiary} />
+              </Card>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.matchHistory}
+          onPress={() => navigation.navigate('MatchHistory')}>
           <Card style={styles.row}>
             <IconTile icon="history" color={colors.warning} />
             <View style={styles.gearInfo}>
@@ -265,4 +291,6 @@ const styles = StyleSheet.create({
   },
   editText: { ...typography.label, fontSize: 11, color: colors.textPrimary },
   linkedRatings: { marginTop: spacing.sm },
+  linkedAccount: { marginBottom: spacing.sm },
+  matchHistory: { marginTop: spacing.md },
 });

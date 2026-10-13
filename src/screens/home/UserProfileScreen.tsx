@@ -5,7 +5,15 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { HomeStackParamList, UserPublicProfile } from '@/types';
 import { apiClient } from '@/services/api';
 import { useProposalStore } from '@/store/proposalStore';
-import { Avatar, RatingBadge, Button, Card, Input, LoadingSpinner } from '@/components';
+import {
+  Avatar,
+  RatingBadge,
+  Button,
+  Card,
+  Input,
+  LinkedAccountCard,
+  LoadingSpinner,
+} from '@/components';
 import { colors, spacing, typography, radius } from '@/theme';
 import { getCurrentLocation, requestLocationPermission } from '@/utils/geolocation';
 
@@ -94,6 +102,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           </View>
         </Card>
       )}
+
+      {profile.linkedAccounts?.map(account => (
+        <View key={account.platform} style={styles.section}>
+          <LinkedAccountCard account={account} />
+        </View>
+      ))}
 
       {stats && (
         <Card style={styles.section}>
