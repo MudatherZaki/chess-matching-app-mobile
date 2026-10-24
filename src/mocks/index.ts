@@ -16,7 +16,8 @@ import {
   ReviewListResponse,
 } from '@/types';
 
-export const USE_MOCK_DATA = __DEV__ && true;
+// Off now that there's a real staging server; turn on to demo without a backend
+export const USE_MOCK_DATA = __DEV__ && false;
 
 export const isMockId = (id?: string) => !!id && id.startsWith('mock-');
 

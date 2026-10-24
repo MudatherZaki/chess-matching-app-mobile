@@ -18,7 +18,9 @@ import {
 } from '@/types';
 import { USE_MOCK_DATA, isMockId, mockApi } from '@/mocks';
 
-export const BASE_URL = 'https://api.chess-matching-app.com'; // Update with your API URL
+// Staging on Render's free plan. To use a backend on your machine, point this at
+// http://localhost:5001 (iOS Simulator) or http://10.0.2.2:5001 (Android emulator).
+export const BASE_URL = 'https://blitzmate-api.onrender.com';
 
 const NO_REFRESH_TOKEN = 'No refresh token';
 
@@ -39,7 +41,8 @@ class ApiClient {
     this.baseURL = BASE_URL;
     this.instance = axios.create({
       baseURL: this.baseURL,
-      timeout: 30000,
+      // The free server sleeps when idle and can take up to a minute to wake
+      timeout: 70000,
       headers: {
         'Content-Type': 'application/json',
       },
