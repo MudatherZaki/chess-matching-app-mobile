@@ -12,7 +12,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { AuthStackParamList } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { Button, Input, BrandMark } from '@/components';
+import { Button, Input, BrandMark, LichessSignInButton } from '@/components';
 import { colors, spacing, typography } from '@/theme';
 import { validationUtils } from '@/utils';
 import { USE_MOCK_DATA } from '@/mocks';
@@ -91,6 +91,8 @@ export default function LoginScreen({ navigation }: Props) {
           {error && <Text style={styles.formError}>{error}</Text>}
 
           <Button title="Sign In" onPress={handleLogin} loading={isLoading} />
+
+          <LichessSignInButton />
 
           {USE_MOCK_DATA && (
             <Button

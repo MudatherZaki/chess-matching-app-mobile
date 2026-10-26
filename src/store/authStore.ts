@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient, errorMessage, isSessionOver } from '@services/api';
+import { LichessAuthCancelled, signInWithLichess } from '@services/lichessAuth';
 import { USE_MOCK_DATA, MOCK_USER } from '@/mocks';
 import {
   User,
@@ -10,10 +11,22 @@ import {
   AuthState,
 } from '@/types';
 
+// Stores the tokens from a sign-in or sign-up and loads the full profile
+async function startSession(response: AuthResponse) {
+  await AsyncStorage.setItem('accessToken', response.accessToken);
+  await AsyncStorage.setItem('refreshToken', response.refreshToken);
+  await AsyncStorage.setItem('userId', response.userId);
+  apiClient.setAuthToken(response.accessToken);
+
+  const user = await apiClient.getMyProfile();
+  return { user, accessToken: response.accessToken, refreshToken: response.refreshToken };
+}
+
 export const useAuthStore = create<
   AuthState & {
     register: (data: RegisterRequest) => Promise<void>;
     login: (data: LoginRequest) => Promise<void>;
+    loginWithLichess: () => Promise<void>;
     logout: () => Promise<void>;
     restoreToken: () => Promise<void>;
     updateUser: (user: User) => void;
@@ -31,24 +44,7 @@ export const useAuthStore = create<
     set({ isLoading: true, error: null });
     try {
       const response: AuthResponse = await apiClient.register(data);
-
-      // Save tokens to async storage
-      await AsyncStorage.setItem('accessToken', response.accessToken);
-      await AsyncStorage.setItem('refreshToken', response.refreshToken);
-      await AsyncStorage.setItem('userId', response.userId);
-
-      // Set auth token in API client
-      apiClient.setAuthToken(response.accessToken);
-
-      // Fetch full user profile
-      const userProfile = await apiClient.getMyProfile();
-
-      set({
-        user: userProfile,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        isLoading: false,
-      });
+      set({ ...(await startSession(response)), isLoading: false });
     } catch (error: any) {
       const message = errorMessage(error, 'Registration failed');
       set({ error: message, isLoading: false });
@@ -60,27 +56,31 @@ export const useAuthStore = create<
     set({ isLoading: true, error: null });
     try {
       const response: AuthResponse = await apiClient.login(data);
-
-      // Save tokens to async storage
-      await AsyncStorage.setItem('accessToken', response.accessToken);
-      await AsyncStorage.setItem('refreshToken', response.refreshToken);
-      await AsyncStorage.setItem('userId', response.userId);
-
-      // Set auth token in API client
-      apiClient.setAuthToken(response.accessToken);
-
-      // Fetch full user profile
-      const userProfile = await apiClient.getMyProfile();
-
-      set({
-        user: userProfile,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        isLoading: false,
-      });
+      set({ ...(await startSession(response)), isLoading: false });
     } catch (error: any) {
       const message = errorMessage(error, 'Login failed');
       set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Not tied to isLoading: the browser round trip shouldn't spin the Sign In
+  // button, so screens show their own progress for it
+  loginWithLichess: async () => {
+    set({ error: null });
+    try {
+      const response = await signInWithLichess();
+      set(await startSession(response));
+    } catch (error: any) {
+      // Backing out on Lichess isn't an error worth showing. Failures of the
+      // browser round trip itself aren't network errors: show their own message.
+      if (!(error instanceof LichessAuthCancelled)) {
+        set({
+          error: error?.isAxiosError
+            ? errorMessage(error, 'Lichess sign-in failed')
+            : error?.message || 'Lichess sign-in failed',
+        });
+      }
       throw error;
     }
   },

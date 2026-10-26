@@ -1,5 +1,5 @@
 import { AppState, Linking } from 'react-native';
-import { LinkedAccount } from '@/types';
+import { AuthResponse, LichessAuthorizeResponse, LinkedAccount } from '@/types';
 import { apiClient } from './api';
 
 // Must match Lichess:RedirectUri on the backend and the AndroidManifest intent-filter
@@ -19,8 +19,29 @@ let abandonPending: (() => void) | null = null;
  * backend creates the PKCE challenge -> Lichess login in the browser ->
  * deep link back with ?code&state -> backend exchanges the code and stores the account.
  */
-export async function connectLichess(): Promise<LinkedAccount> {
-  const { authorizeUrl, state } = await apiClient.startLichessAuth();
+export function connectLichess(): Promise<LinkedAccount> {
+  return authorizeWithLichess(
+    () => apiClient.startLichessAuth(),
+    (code, state) => apiClient.completeLichessAuth(code, state),
+  );
+}
+
+/**
+ * Signs in with Lichess, creating a BlitzMate account on first use.
+ * Same round trip as linking; the backend returns tokens instead of an account.
+ */
+export function signInWithLichess(): Promise<AuthResponse> {
+  return authorizeWithLichess(
+    () => apiClient.startLichessSignIn(),
+    (code, state) => apiClient.completeLichessSignIn(code, state),
+  );
+}
+
+async function authorizeWithLichess<T>(
+  start: () => Promise<LichessAuthorizeResponse>,
+  complete: (code: string, state: string) => Promise<T>,
+): Promise<T> {
+  const { authorizeUrl, state } = await start();
   const params = parseQuery(await openAndWaitForRedirect(authorizeUrl));
 
   if (params.error) {
@@ -29,7 +50,7 @@ export async function connectLichess(): Promise<LinkedAccount> {
   if (!params.code || params.state !== state) {
     throw new Error('Lichess sign-in failed. Please try again.');
   }
-  return apiClient.completeLichessAuth(params.code, state);
+  return complete(params.code, state);
 }
 
 function openAndWaitForRedirect(authorizeUrl: string): Promise<string> {
@@ -54,7 +75,7 @@ function openAndWaitForRedirect(authorizeUrl: string): Promise<string> {
         graceTimer = setTimeout(
           () =>
             finish(() =>
-              reject(new Error("Lichess sign-in didn't finish. Please try connecting again.")),
+              reject(new Error("Lichess sign-in didn't finish. Please try again.")),
             ),
           RETURN_GRACE_MS,
         );

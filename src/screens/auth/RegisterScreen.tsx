@@ -12,7 +12,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { AuthStackParamList } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { Button, Input, BrandMark } from '@/components';
+import { Button, Input, BrandMark, LichessSignInButton } from '@/components';
 import { colors, spacing, typography } from '@/theme';
 import { validationUtils } from '@/utils';
 
@@ -138,6 +138,8 @@ export default function RegisterScreen({ navigation }: Props) {
           {error && <Text style={styles.formError}>{error}</Text>}
 
           <Button title="Create Account" onPress={handleRegister} loading={isLoading} />
+
+          <LichessSignInButton />
 
           <TouchableOpacity style={styles.footer} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.footerText}>

@@ -80,6 +80,8 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  // Set by Lichess sign-in when it created the account
+  isNewUser?: boolean;
 }
 
 export interface LoginRequest {
