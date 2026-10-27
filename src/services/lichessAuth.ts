@@ -67,7 +67,7 @@ function openAndWaitForRedirect(authorizeUrl: string): Promise<string> {
         graceTimer = setTimeout(
           () =>
             finish(() =>
-              reject(new Error("Lichess sign-in didn't finish. Please try connecting again.")),
+              reject(new Error("Lichess sign-in didn't finish. Please try again.")),
             ),
           RETURN_GRACE_MS,
         );

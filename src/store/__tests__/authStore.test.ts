@@ -41,7 +41,7 @@ describe('loginWithLichess', () => {
   });
 
   it('says why when the browser round trip fails', async () => {
-    signInWithLichess.mockRejectedValue(new Error("Lichess sign-in didn't finish. Please try connecting again."));
+    signInWithLichess.mockRejectedValue(new Error("Lichess sign-in didn't finish. Please try again."));
 
     await useAuthStore.getState().loginWithLichess();
 
