@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer, DarkTheme, Theme } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
+import {
+  NavigationContainer,
+  DarkTheme,
+  Theme,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -16,9 +22,10 @@ import {
   GatheringsStackParamList,
   ProfileStackParamList,
   SettingsStackParamList,
+  MemberJoinedPayload,
 } from '@/types';
 import { colors, fonts } from '@/theme';
-import { LoadingSpinner } from '@/components';
+import { LoadingSpinner, JoinedBanner } from '@/components';
 
 // Auth screens
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -43,6 +50,8 @@ import EditProfileScreen from '@/screens/profile/EditProfileScreen';
 import SettingsScreen from '@/screens/settings/SettingsScreen';
 import BlockListScreen from '@/screens/settings/BlockListScreen';
 import AboutScreen from '@/screens/settings/AboutScreen';
+
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -167,6 +176,14 @@ const AppTabNavigator = () => {
   // A fixed height overrides the tab bar's own safe-area padding, so add the
   // home-indicator inset back in
   const { bottom } = useSafeAreaInsets();
+  const [joined, setJoined] = useState<MemberJoinedPayload | null>(null);
+  const dismissJoined = useCallback(() => setJoined(null), []);
+  const openGathering = useCallback((gatheringId: string) => {
+    navigationRef.navigate('App', {
+      screen: 'GatheringsStack',
+      params: { screen: 'GatheringDetail', params: { gatheringId }, initial: false },
+    });
+  }, []);
 
   // Load join requests up front so the Gatherings badge is accurate, then keep
   // it current over the live connection. GatheringsListScreen retries and
@@ -183,6 +200,7 @@ const AppTabNavigator = () => {
         refresh();
         fetchMine().catch(() => {});
       },
+      onMemberJoined: setJoined,
       onGatheringUpdated: () => {
         refresh();
         fetchMine().catch(() => {});
@@ -194,58 +212,61 @@ const AppTabNavigator = () => {
   }, [fetchRequests, fetchMine]);
 
   return (
-    <AppTabs.Navigator
-      screenOptions={({ route }: { route: { name: keyof AppTabParamList } }) => ({
-        headerShown: false,
-        tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-          <Icon name={TAB_ICONS[route.name]} size={focused ? 26 : 24} color={color} />
-        ),
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textTertiary,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.borderLight,
-          height: 68 + bottom,
-          paddingTop: 8,
-          paddingBottom: 10 + bottom,
-        },
-        tabBarLabelStyle: {
-          fontFamily: fonts.mono,
-          fontSize: 10,
-          fontWeight: '700' as const,
-          letterSpacing: 0.8,
-        },
-        tabBarBadgeStyle: {
-          backgroundColor: colors.secondary,
-          color: colors.textInverse,
-          fontSize: 10,
-          fontWeight: '800' as const,
-        },
-      })}>
-      <AppTabs.Screen
-        name="HomeStack"
-        component={HomeStackNavigator}
-        options={{ tabBarLabel: 'RADAR' }}
-      />
-      <AppTabs.Screen
-        name="GatheringsStack"
-        component={GatheringsStackNavigator}
-        options={{
-          tabBarLabel: 'GATHERINGS',
-          tabBarBadge: requestCount > 0 ? requestCount : undefined,
-        }}
-      />
-      <AppTabs.Screen
-        name="ProfileStack"
-        component={ProfileStackNavigator}
-        options={{ tabBarLabel: 'PROFILE' }}
-      />
-      <AppTabs.Screen
-        name="SettingsStack"
-        component={SettingsStackNavigator}
-        options={{ tabBarLabel: 'SETTINGS' }}
-      />
-    </AppTabs.Navigator>
+    <View style={{ flex: 1 }}>
+      <AppTabs.Navigator
+        screenOptions={({ route }: { route: { name: keyof AppTabParamList } }) => ({
+          headerShown: false,
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+            <Icon name={TAB_ICONS[route.name]} size={focused ? 26 : 24} color={color} />
+          ),
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textTertiary,
+          tabBarStyle: {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.borderLight,
+            height: 68 + bottom,
+            paddingTop: 8,
+            paddingBottom: 10 + bottom,
+          },
+          tabBarLabelStyle: {
+            fontFamily: fonts.mono,
+            fontSize: 10,
+            fontWeight: '700' as const,
+            letterSpacing: 0.8,
+          },
+          tabBarBadgeStyle: {
+            backgroundColor: colors.secondary,
+            color: colors.textInverse,
+            fontSize: 10,
+            fontWeight: '800' as const,
+          },
+        })}>
+        <AppTabs.Screen
+          name="HomeStack"
+          component={HomeStackNavigator}
+          options={{ tabBarLabel: 'RADAR' }}
+        />
+        <AppTabs.Screen
+          name="GatheringsStack"
+          component={GatheringsStackNavigator}
+          options={{
+            tabBarLabel: 'GATHERINGS',
+            tabBarBadge: requestCount > 0 ? requestCount : undefined,
+          }}
+        />
+        <AppTabs.Screen
+          name="ProfileStack"
+          component={ProfileStackNavigator}
+          options={{ tabBarLabel: 'PROFILE' }}
+        />
+        <AppTabs.Screen
+          name="SettingsStack"
+          component={SettingsStackNavigator}
+          options={{ tabBarLabel: 'SETTINGS' }}
+        />
+      </AppTabs.Navigator>
+      <JoinedBanner joined={joined} onPress={openGathering} onDismiss={dismissJoined} />
+    </View>
   );
 };
 
@@ -265,7 +286,7 @@ export const Navigation = () => {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <RootStack.Screen name="App" component={AppTabNavigator} />

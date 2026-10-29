@@ -1,3 +1,5 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 // User & Authentication
 export interface User {
   id: string;
@@ -277,6 +279,13 @@ export interface JoinRequestResolvedPayload {
   status: JoinRequestStatus;
 }
 
+export interface MemberJoinedPayload {
+  gatheringId: string;
+  venueName: string;
+  member: GatheringPerson;
+  memberCount: number;
+}
+
 export interface GatheringUpdatedPayload {
   gatheringId: string;
   status: GatheringStatus;
@@ -297,7 +306,7 @@ export interface UserCameOnlinePayload {
 // Navigation
 export type RootStackParamList = {
   Auth: undefined;
-  App: undefined;
+  App: NavigatorScreenParams<AppTabParamList> | undefined;
 };
 
 export type AuthStackParamList = {
@@ -308,7 +317,7 @@ export type AuthStackParamList = {
 
 export type AppTabParamList = {
   HomeStack: undefined;
-  GatheringsStack: undefined;
+  GatheringsStack: NavigatorScreenParams<GatheringsStackParamList> | undefined;
   ProfileStack: undefined;
   SettingsStack: undefined;
 };
