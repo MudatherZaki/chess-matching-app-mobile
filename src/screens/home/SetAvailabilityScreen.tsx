@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { HomeStackParamList } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
+import { useAuthStore } from '@/store/authStore';
 import { AppHeader, Button, Card, Tag, Toggle, IconTile, SectionHeader } from '@/components';
 import { colors, spacing, typography, radius } from '@/theme';
 import { getCurrentLocation, requestLocationPermission } from '@/utils/geolocation';
@@ -20,7 +21,9 @@ const DURATION_OPTIONS: { hours: number; label: string; hint: string; icon: stri
 export default function SetAvailabilityScreen({ navigation }: Props) {
   const { isAvailable, currentLocation, setAvailability, setUnavailable, isLoading } =
     useLocationStore();
-  const [hasBoard, setHasBoard] = useState(false);
+  // Starts from the profile, since dropping the beacon saves this back to it
+  const profileHasBoard = useAuthStore(s => !!s.user?.hasBoard);
+  const [hasBoard, setHasBoard] = useState(profileHasBoard);
   const [duration, setDuration] = useState(4);
   const [locating, setLocating] = useState(false);
 

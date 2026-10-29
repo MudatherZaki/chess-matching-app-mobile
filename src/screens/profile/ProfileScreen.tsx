@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ProfileStackParamList } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { apiClient } from '@/services/api';
 import { useLocationStore, RADIUS_OPTIONS_KM } from '@/store/locationStore';
 import {
   AppHeader,
@@ -15,6 +16,7 @@ import {
   IconTile,
   Tag,
   LinkedAccountCard,
+  Toggle,
 } from '@/components';
 import { colors, spacing, typography, radius } from '@/theme';
 
@@ -23,10 +25,25 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 const RADIUS_OPTIONS = RADIUS_OPTIONS_KM.map(String);
 
 export default function ProfileScreen({ navigation }: Props) {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { isAvailable, searchRadiusKm, setSearchRadius } = useLocationStore();
+  const [savingBoard, setSavingBoard] = useState(false);
 
   if (!user) return null;
+
+  const setHasBoard = async (hasBoard: boolean) => {
+    setSavingBoard(true);
+    // Flip it right away; the saved profile replaces it, or the old value comes back on failure
+    updateUser({ ...user, hasBoard });
+    try {
+      updateUser(await apiClient.updateProfile({ hasBoard }));
+    } catch (e: any) {
+      updateUser(user);
+      Alert.alert('Error', e?.response?.data?.message || 'Failed to update your board');
+    } finally {
+      setSavingBoard(false);
+    }
+  };
 
   const ratings = [
     { label: 'FIDE', rating: user.fideRating, color: colors.primary },
@@ -132,11 +149,7 @@ export default function ProfileScreen({ navigation }: Props) {
                 </Text>
                 <Text style={styles.rowSub}>Declared street hardware</Text>
               </View>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('EditProfile')}>
-                <Text style={styles.editText}>Edit</Text>
-              </TouchableOpacity>
+              <Toggle value={user.hasBoard} onValueChange={setHasBoard} disabled={savingBoard} />
             </View>
 
             {ratings.length > 0 && (
@@ -247,13 +260,6 @@ const styles = StyleSheet.create({
   rowTitle: { ...typography.bodyBold, fontWeight: '800', color: colors.textPrimary },
   rowSub: { ...typography.small, color: colors.textSecondary, marginTop: 2, marginRight: spacing.sm },
   gearInfo: { flex: 1, marginLeft: spacing.sm + 4 },
-  editButton: {
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.full,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  editText: { ...typography.label, fontSize: 11, color: colors.textPrimary },
   linkedRatings: { marginTop: spacing.sm },
   linkedAccount: { marginBottom: spacing.sm },
   gatheringsLink: { marginTop: spacing.md },
