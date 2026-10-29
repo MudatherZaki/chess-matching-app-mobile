@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import { apiClient } from '@services/api';
 import { useAuthStore } from './authStore';
-import { Location, LocationState, NearbyUsersResponse, User } from '@/types';
+import {
+  Location,
+  LocationState,
+  NearbyUsersResponse,
+  SetAvailabilityResponse,
+  User,
+} from '@/types';
 
 // Single source of truth for the selectable search radii, shared by the
 // Radar screen's cycle button and the Profile screen's segmented control so
@@ -35,7 +41,7 @@ export const useLocationStore = create<
   setAvailability: async (location, hasBoard, expiresInHours = 4) => {
     set({ isLoading: true, error: null });
     try {
-      await apiClient.setAvailability({
+      const response: SetAvailabilityResponse | undefined = await apiClient.setAvailability({
         isAvailable: true,
         latitude: location.latitude,
         longitude: location.longitude,
@@ -49,9 +55,13 @@ export const useLocationStore = create<
         isLoading: false,
       });
 
-      // The beacon also updates the board flag on the profile
+      // The beacon also updates the board flag and expiry on the profile. The
+      // expiry must be the new one: the profile subscription below re-derives
+      // isAvailable from it, and a stale one from a past beacon turns this one off
+      const availabilityExpiresAt =
+        response?.expiresAt ?? new Date(Date.now() + expiresInHours * 3_600_000).toISOString();
       const { user, updateUser } = useAuthStore.getState();
-      if (user) updateUser({ ...user, hasBoard, isAvailable: true });
+      if (user) updateUser({ ...user, hasBoard, isAvailable: true, availabilityExpiresAt });
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to set availability';
       set({ error: message, isLoading: false });
