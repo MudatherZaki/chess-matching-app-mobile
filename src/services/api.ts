@@ -84,7 +84,9 @@ class ApiClient {
 
         // Auth endpoints answer 401 for a wrong password or a dead refresh
         // token; retrying them would replace that message with a refresh error
-        const isAuthCall = originalRequest?.url?.startsWith('/api/v1/auth/');
+        // (email verification is the exception: it needs a signed-in player)
+        const url: string = originalRequest?.url ?? '';
+        const isAuthCall = url.startsWith('/api/v1/auth/') && !url.startsWith('/api/v1/auth/email/');
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthCall) {
           originalRequest._retry = true;
 
@@ -147,6 +149,15 @@ class ApiClient {
   async completeLichessSignIn(code: string, state: string): Promise<AuthResponse> {
     const response = await this.instance.post('/api/v1/auth/lichess/callback', { code, state });
     return response.data;
+  }
+
+  async verifyEmail(code: string): Promise<{ emailVerified: boolean }> {
+    const response = await this.instance.post('/api/v1/auth/email/verify', { code });
+    return response.data;
+  }
+
+  async resendVerificationEmail(): Promise<void> {
+    await this.instance.post('/api/v1/auth/email/resend', {});
   }
 
   async refresh(refreshToken: string): Promise<AuthResponse> {

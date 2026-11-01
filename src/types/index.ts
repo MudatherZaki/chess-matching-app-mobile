@@ -2,6 +2,9 @@
 export interface User {
   id: string;
   email: string;
+  // false until the 6-digit code from the sign-up email is entered; meeting
+  // features (radar, gatherings, reviews) stay locked until then
+  emailVerified?: boolean;
   username: string;
   fullName?: string;
   photoUrl?: string;
@@ -77,6 +80,7 @@ export interface AuthResponse {
   userId: string;
   email: string;
   username: string;
+  emailVerified: boolean;
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
@@ -297,6 +301,7 @@ export interface UserCameOnlinePayload {
 // Navigation
 export type RootStackParamList = {
   Auth: undefined;
+  VerifyEmail: undefined;
   App: undefined;
 };
 
@@ -344,6 +349,9 @@ export interface AuthState {
   refreshToken: string | null;
   isLoading: boolean;
   error: string | null;
+  verifyEmailLater: boolean;
+  // When the last verification code was emailed (ms), for the resend countdown
+  verificationCodeSentAt: number | null;
 }
 
 export interface LocationState {
