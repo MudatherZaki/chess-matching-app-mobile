@@ -30,6 +30,8 @@ import { LoadingSpinner, JoinedBanner } from '@/components';
 // Auth screens
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+import VerifyEmailScreen from '@/screens/auth/VerifyEmailScreen';
+import { requireVerifiedEmail } from '@/components/EmailGate';
 
 // Home stack screens
 import MapScreen from '@/screens/home/MapScreen';
@@ -51,6 +53,9 @@ import SettingsScreen from '@/screens/settings/SettingsScreen';
 import BlockListScreen from '@/screens/settings/BlockListScreen';
 import AboutScreen from '@/screens/settings/AboutScreen';
 
+// Meeting people needs a confirmed email; these show a "confirm first" card until then
+const RadarScreen = requireVerifiedEmail(MapScreen, 'See players near you');
+const GatheringsScreen = requireVerifiedEmail(GatheringsListScreen, 'Join gatherings near you');
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -103,7 +108,7 @@ const AuthStackNavigator = () => (
 
 const HomeStackNavigator = () => (
   <HomeStack.Navigator screenOptions={screenOptions}>
-    <HomeStack.Screen name="Map" component={MapScreen} options={noHeader} />
+    <HomeStack.Screen name="Map" component={RadarScreen} options={noHeader} />
     <HomeStack.Screen
       name="UserProfile"
       component={UserProfileScreen}
@@ -121,7 +126,7 @@ const GatheringsStackNavigator = () => (
   <GatheringsStack.Navigator screenOptions={screenOptions}>
     <GatheringsStack.Screen
       name="GatheringsList"
-      component={GatheringsListScreen}
+      component={GatheringsScreen}
       options={noHeader}
     />
     <GatheringsStack.Screen
@@ -176,6 +181,7 @@ const AppTabNavigator = () => {
   // A fixed height overrides the tab bar's own safe-area padding, so add the
   // home-indicator inset back in
   const { bottom } = useSafeAreaInsets();
+  const emailVerified = useAuthStore(s => s.user?.emailVerified !== false);
   const [joined, setJoined] = useState<MemberJoinedPayload | null>(null);
   const dismissJoined = useCallback(() => setJoined(null), []);
   const openGathering = useCallback((gatheringId: string) => {
@@ -189,6 +195,8 @@ const AppTabNavigator = () => {
   // it current over the live connection. GatheringsListScreen retries and
   // surfaces errors when opened; here we just make sure failures are logged.
   useEffect(() => {
+    // Gatherings answer 403 until the email is confirmed
+    if (!emailVerified) return;
     const refresh = () =>
       fetchRequests().catch(error => {
         console.warn('Failed to load join requests for tab badge:', error);
@@ -209,7 +217,7 @@ const AppTabNavigator = () => {
     return () => {
       stopRealtime();
     };
-  }, [fetchRequests, fetchMine]);
+  }, [emailVerified, fetchRequests, fetchMine]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -271,7 +279,7 @@ const AppTabNavigator = () => {
 };
 
 export const Navigation = () => {
-  const { user, restoreToken } = useAuthStore();
+  const { user, restoreToken, verifyEmailLater } = useAuthStore();
   // Only the startup session check gets a full-screen spinner. Sign-in and
   // sign-up also set isLoading; swapping the screen out for them would
   // unmount the form and wipe what the user typed.
@@ -289,7 +297,11 @@ export const Navigation = () => {
     <NavigationContainer ref={navigationRef} theme={navTheme}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          <RootStack.Screen name="App" component={AppTabNavigator} />
+          user.emailVerified === false && !verifyEmailLater ? (
+            <RootStack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+          ) : (
+            <RootStack.Screen name="App" component={AppTabNavigator} />
+          )
         ) : (
           <RootStack.Screen name="Auth" component={AuthStackNavigator} />
         )}

@@ -79,6 +79,26 @@ describe('token refresh', () => {
     });
     expect(calls.map(c => c.url)).toEqual(['/api/v1/auth/login']);
   });
+
+  it('refreshes an expired token before confirming an email code', async () => {
+    route = ({ url, headers }) => {
+      if (url === '/api/v1/auth/refresh') return { status: 200, data: { accessToken: 'fresh-access', expiresIn: 3600 } };
+      if (url === '/api/v1/auth/email/verify') {
+        return headers.Authorization === 'Bearer fresh-access'
+          ? { status: 200, data: { emailVerified: true } }
+          : { status: 401 };
+      }
+      return { status: 404 };
+    };
+    apiClient.setAuthToken('expired-access');
+
+    await expect(apiClient.verifyEmail('123456')).resolves.toEqual({ emailVerified: true });
+    expect(calls.map(c => c.url)).toEqual([
+      '/api/v1/auth/email/verify',
+      '/api/v1/auth/refresh',
+      '/api/v1/auth/email/verify',
+    ]);
+  });
 });
 
 describe('isSessionOver', () => {

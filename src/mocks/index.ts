@@ -198,6 +198,7 @@ const ME: GatheringPerson = { id: 'me', username: 'you', hasBoard: true };
 export const MOCK_USER: User = {
   id: ME.id,
   email: 'you@demo.dev',
+  emailVerified: true,
   username: ME.username,
   fullName: 'Demo Player',
   bio: 'Exploring BlitzMate with demo data.',

@@ -32,6 +32,10 @@ export const useAuthStore = create<
     updateUser: (user: User) => void;
     clearError: () => void;
     signInWithDemo: () => void;
+    // Email verification
+    verifyEmail: (code: string) => Promise<void>;
+    resendVerificationCode: () => Promise<void>;
+    setVerifyEmailLater: (later: boolean) => void;
   }
 >(set => ({
   user: null,
@@ -39,13 +43,21 @@ export const useAuthStore = create<
   refreshToken: null,
   isLoading: false,
   error: null,
+  verifyEmailLater: false,
+  verificationCodeSentAt: null,
 
   register: async data => {
     set({ isLoading: true, error: null });
     try {
       const response: AuthResponse = await apiClient.register(data);
 
-      set({ ...(await startSession(response)), isLoading: false });
+      // The server emails the first code as part of signing up
+      set({
+        ...(await startSession(response)),
+        isLoading: false,
+        verifyEmailLater: false,
+        verificationCodeSentAt: Date.now(),
+      });
     } catch (error: any) {
       const message = errorMessage(error, 'Registration failed');
       set({ error: message, isLoading: false });
@@ -113,6 +125,8 @@ export const useAuthStore = create<
       refreshToken: null,
       isLoading: false,
       error: null,
+      verifyEmailLater: false,
+      verificationCodeSentAt: null,
     });
   },
 
@@ -164,6 +178,23 @@ export const useAuthStore = create<
     set({ error: null });
   },
 
+  verifyEmail: async code => {
+    await apiClient.verifyEmail(code);
+    const user: User = await apiClient.getMyProfile();
+    set({ user, verifyEmailLater: false });
+  },
+
+  resendVerificationCode: async () => {
+    await apiClient.resendVerificationEmail();
+    set({ verificationCodeSentAt: Date.now() });
+  },
+
+  // "Do this later" lets an unverified player into the app for this session,
+  // with the meeting features locked
+  setVerifyEmailLater: later => {
+    set({ verifyEmailLater: later });
+  },
+
   // Dev builds only: browse the app as a mock user without a backend. Nothing
   // is stored, so a reload returns to the login screen.
   signInWithDemo: () => {
@@ -175,5 +206,11 @@ export const useAuthStore = create<
 // A rejected refresh mid-session means signing in again
 apiClient.setOnSessionOver(() => {
   apiClient.clearAuthToken();
-  useAuthStore.setState({ user: null, accessToken: null, refreshToken: null });
+  useAuthStore.setState({
+    user: null,
+    accessToken: null,
+    refreshToken: null,
+    verifyEmailLater: false,
+    verificationCodeSentAt: null,
+  });
 });
