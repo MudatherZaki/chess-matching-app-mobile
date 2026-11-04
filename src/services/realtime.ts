@@ -10,11 +10,13 @@ import {
   GatheringUpdatedPayload,
   JoinRequestReceivedPayload,
   JoinRequestResolvedPayload,
+  MemberJoinedPayload,
 } from '@/types';
 
 export interface RealtimeHandlers {
   onJoinRequestReceived?: (payload: JoinRequestReceivedPayload) => void;
   onJoinRequestResolved?: (payload: JoinRequestResolvedPayload) => void;
+  onMemberJoined?: (payload: MemberJoinedPayload) => void;
   onGatheringUpdated?: (payload: GatheringUpdatedPayload) => void;
 }
 
@@ -48,6 +50,7 @@ export async function startRealtime(handlers: RealtimeHandlers) {
   };
   on('JoinRequestReceived', handlers.onJoinRequestReceived);
   on('JoinRequestResolved', handlers.onJoinRequestResolved);
+  on('MemberJoined', handlers.onMemberJoined);
   on('GatheringUpdated', handlers.onGatheringUpdated);
 
   // Sent by the hub but not used by the app yet; a handler keeps SignalR from

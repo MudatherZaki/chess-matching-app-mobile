@@ -9,6 +9,7 @@
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
+      android:supportsRtl="false"
       android:theme="@style/AppTheme">
       <!-- Google Maps SDK key for react-native-maps. Restricted in Google Cloud to
            package com.chessmatchingapp + the signing key's SHA-1, so it's safe to ship. -->

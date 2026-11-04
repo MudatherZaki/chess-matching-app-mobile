@@ -6,6 +6,7 @@ export { Avatar, RatingBadge } from './Avatar';
 export { default as UserCard } from './UserCard';
 export { default as GatheringCard, STATUS_LABELS, formatWindow } from './GatheringCard';
 export { default as LinkedAccountCard } from './LinkedAccountCard';
+export { default as JoinedBanner } from './JoinedBanner';
 export { default as AppHeader, APP_NAME, BrandMark } from './AppHeader';
 export { Tag, Chip, Toggle, SegmentedControl, SectionHeader, IconTile, IconButton } from './UI';
 export type { SegmentOption } from './UI';
