@@ -10,7 +10,6 @@ export interface User {
   bio?: string;
   isAvailable: boolean;
   availabilityExpiresAt?: string;
-  hasBoard: boolean;
   fideId?: string;
   fideRating?: number;
   chessCom?: ChessRating;
@@ -99,7 +98,6 @@ export interface RegisterRequest {
 export interface UpdateProfileRequest {
   fullName?: string;
   bio?: string;
-  hasBoard?: boolean;
   fideId?: string;
   fideRating?: number;
 }
@@ -187,6 +185,7 @@ export interface CreateGatheringRequest {
   startsAt: string;
   endsAt: string;
   note?: string;
+  hasBoard: boolean;
 }
 
 export type JoinRequestStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'withdrawn';

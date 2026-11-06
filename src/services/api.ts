@@ -286,9 +286,12 @@ class ApiClient {
     return response.data;
   }
 
-  async requestToJoin(gatheringId: string, message?: string): Promise<JoinRequest> {
-    if (USE_MOCK_DATA && isMockId(gatheringId)) return mockApi.join(gatheringId, message);
-    const response = await this.instance.post(`/api/v1/gatherings/${gatheringId}/join`, { message });
+  async requestToJoin(gatheringId: string, message?: string, hasBoard = false): Promise<JoinRequest> {
+    if (USE_MOCK_DATA && isMockId(gatheringId)) return mockApi.join(gatheringId, message, hasBoard);
+    const response = await this.instance.post(`/api/v1/gatherings/${gatheringId}/join`, {
+      message,
+      hasBoard,
+    });
     return response.data;
   }
 
