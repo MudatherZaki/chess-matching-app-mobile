@@ -17,7 +17,7 @@ interface GatheringState {
   fetchMine: () => Promise<void>;
   fetchRequests: () => Promise<void>;
   createGathering: (data: CreateGatheringRequest) => Promise<Gathering>;
-  requestToJoin: (gatheringId: string, message?: string) => Promise<JoinRequest>;
+  requestToJoin: (gatheringId: string, message?: string, hasBoard?: boolean) => Promise<JoinRequest>;
   withdrawRequest: (requestId: string) => Promise<void>;
   approveRequest: (requestId: string) => Promise<JoinRequest>;
   rejectRequest: (requestId: string) => Promise<JoinRequest>;
@@ -75,8 +75,8 @@ export const useGatheringStore = create<GatheringState>((set, get) => ({
     return gathering;
   },
 
-  requestToJoin: async (gatheringId, message) => {
-    const request = await apiClient.requestToJoin(gatheringId, message);
+  requestToJoin: async (gatheringId, message, hasBoard) => {
+    const request = await apiClient.requestToJoin(gatheringId, message, hasBoard);
     set({
       myRequests: [request, ...get().myRequests],
       nearby: get().nearby.map(g =>

@@ -55,13 +55,13 @@ export const useLocationStore = create<
         isLoading: false,
       });
 
-      // The beacon also updates the board flag and expiry on the profile. The
+      // The beacon also updates the expiry on the profile. The
       // expiry must be the new one: the profile subscription below re-derives
       // isAvailable from it, and a stale one from a past beacon turns this one off
       const availabilityExpiresAt =
         response?.expiresAt ?? new Date(Date.now() + expiresInHours * 3_600_000).toISOString();
       const { user, updateUser } = useAuthStore.getState();
-      if (user) updateUser({ ...user, hasBoard, isAvailable: true, availabilityExpiresAt });
+      if (user) updateUser({ ...user, isAvailable: true, availabilityExpiresAt });
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to set availability';
       set({ error: message, isLoading: false });

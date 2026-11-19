@@ -203,7 +203,6 @@ export const MOCK_USER: User = {
   fullName: 'Demo Player',
   bio: 'Exploring BlitzMate with demo data.',
   isAvailable: false,
-  hasBoard: true,
   lichess: { username: 'demo', rating: 1650 },
   createdAt: new Date().toISOString(),
 };
@@ -265,12 +264,12 @@ export const mockApi = {
     return buildGathering(GATHERINGS.find(g => g.id === id)!);
   },
 
-  join(gatheringId: string, message?: string): JoinRequest {
+  join(gatheringId: string, message?: string, hasBoard = false): JoinRequest {
     const now = Date.now();
     const request: JoinRequest = {
       id: `mock-mine-${now}`,
       gatheringId,
-      requester: ME,
+      requester: { ...ME, hasBoard },
       message,
       status: 'pending',
       createdAt: new Date(now).toISOString(),

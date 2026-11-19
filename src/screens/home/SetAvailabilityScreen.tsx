@@ -20,6 +20,7 @@ const DURATION_OPTIONS: { hours: number; label: string; hint: string; icon: stri
 export default function SetAvailabilityScreen({ navigation }: Props) {
   const { isAvailable, currentLocation, setAvailability, setUnavailable, isLoading } =
     useLocationStore();
+  // Whether you have a board is per beacon, not part of your profile
   const [hasBoard, setHasBoard] = useState(false);
   const [duration, setDuration] = useState(4);
   const [locating, setLocating] = useState(false);

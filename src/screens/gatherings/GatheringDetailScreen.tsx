@@ -11,11 +11,13 @@ import {
   Avatar,
   Button,
   Card,
+  IconTile,
   Input,
   LoadingSpinner,
   RatingBadge,
   SectionHeader,
   Tag,
+  Toggle,
   STATUS_LABELS,
   formatWindow,
 } from '@/components';
@@ -35,6 +37,7 @@ export default function GatheringDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [bringingBoard, setBringingBoard] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -184,12 +187,22 @@ export default function GatheringDetailScreen({ route, navigation }: Props) {
               onChangeText={setMessage}
               maxLength={300}
             />
+            <View style={styles.boardRow}>
+              <IconTile
+                icon="checkerboard"
+                color={bringingBoard ? colors.primary : colors.textTertiary}
+              />
+              <Text style={styles.boardLabel}>I'm bringing a board</Text>
+              <Toggle value={bringingBoard} onValueChange={setBringingBoard} />
+            </View>
             <Button
               title="Ask to join"
               icon="hand-wave-outline"
               loading={busy === 'join'}
               onPress={() =>
-                run('join', () => store.requestToJoin(gathering.id, message.trim() || undefined))
+                run('join', () =>
+                  store.requestToJoin(gathering.id, message.trim() || undefined, bringingBoard),
+                )
               }
             />
           </Card>
@@ -289,6 +302,13 @@ function PersonRow({
 }
 
 const styles = StyleSheet.create({
+  boardRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
+  boardLabel: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+    flex: 1,
+    marginHorizontal: spacing.sm + 4,
+  },
   flex: { flex: 1, backgroundColor: colors.background },
   grow: { flex: 1 },
   gap: { marginLeft: spacing.sm },

@@ -118,40 +118,18 @@ export default function ProfileScreen({ navigation }: Props) {
           </Card>
         </View>
 
-        <View style={styles.section}>
-          <SectionHeader title="Gear & Play Standards" icon="view-grid-outline" color={colors.secondary} />
-          <Card>
-            <View style={styles.row}>
-              <IconTile
-                icon="checkerboard"
-                color={user.hasBoard ? colors.primary : colors.textTertiary}
-              />
-              <View style={styles.gearInfo}>
-                <Text style={styles.rowTitle}>
-                  {user.hasBoard ? 'Carries a board' : 'No board declared'}
-                </Text>
-                <Text style={styles.rowSub}>Declared street hardware</Text>
+        {ratings.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader title="Linked Ratings" icon="view-grid-outline" color={colors.secondary} />
+            <Card>
+              <View style={styles.badgeRow}>
+                {ratings.map(r => (
+                  <RatingBadge key={r.label} label={r.label} rating={r.rating} color={r.color} />
+                ))}
               </View>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('EditProfile')}>
-                <Text style={styles.editText}>Edit</Text>
-              </TouchableOpacity>
-            </View>
-
-            {ratings.length > 0 && (
-              <>
-                <View style={styles.divider} />
-                <Text style={styles.rowTitle}>Linked Ratings</Text>
-                <View style={[styles.badgeRow, styles.linkedRatings]}>
-                  {ratings.map(r => (
-                    <RatingBadge key={r.label} label={r.label} rating={r.rating} color={r.color} />
-                  ))}
-                </View>
-              </>
-            )}
-          </Card>
-        </View>
+            </Card>
+          </View>
+        )}
 
         <View style={styles.section}>
           <SectionHeader title="Online Accounts" icon="link-variant" color={colors.warning} />
@@ -247,14 +225,6 @@ const styles = StyleSheet.create({
   rowTitle: { ...typography.bodyBold, fontWeight: '800', color: colors.textPrimary },
   rowSub: { ...typography.small, color: colors.textSecondary, marginTop: 2, marginRight: spacing.sm },
   gearInfo: { flex: 1, marginLeft: spacing.sm + 4 },
-  editButton: {
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.full,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  editText: { ...typography.label, fontSize: 11, color: colors.textPrimary },
-  linkedRatings: { marginTop: spacing.sm },
   linkedAccount: { marginBottom: spacing.sm },
   gatheringsLink: { marginTop: spacing.md },
 });

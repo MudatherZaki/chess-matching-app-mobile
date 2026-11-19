@@ -5,7 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GatheringsStackParamList } from '@/types';
 import { useGatheringStore } from '@/store/gatheringStore';
 import { useLocationStore } from '@/store/locationStore';
-import { Button, Card, Chip, Input, SectionHeader } from '@/components';
+import { Button, Card, Chip, IconTile, Input, SectionHeader, Toggle } from '@/components';
 import { colors, radius, spacing, typography } from '@/theme';
 import { getCurrentLocation, requestLocationPermission } from '@/utils/geolocation';
 import { timeUtils } from '@/utils';
@@ -32,6 +32,7 @@ export default function CreateGatheringScreen({ navigation }: Props) {
   );
   const [startIn, setStartIn] = useState(0);
   const [hours, setHours] = useState(2);
+  const [hasBoard, setHasBoard] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Start the pin where you are; you can then drag or tap to move it
@@ -65,6 +66,7 @@ export default function CreateGatheringScreen({ navigation }: Props) {
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
         note: note.trim() || undefined,
+        hasBoard,
       });
       navigation.replace('GatheringDetail', { gatheringId: gathering.id });
     } catch (e: any) {
@@ -122,6 +124,17 @@ export default function CreateGatheringScreen({ navigation }: Props) {
         until it ends.
       </Text>
 
+      <Card style={styles.boardCard}>
+        <View style={styles.boardRow}>
+          <IconTile icon="checkerboard" color={hasBoard ? colors.primary : colors.textTertiary} />
+          <View style={styles.boardInfo}>
+            <Text style={styles.boardTitle}>I'm bringing a board</Text>
+            <Text style={styles.hint}>So people know there'll be a set to play on</Text>
+          </View>
+          <Toggle value={hasBoard} onValueChange={setHasBoard} />
+        </View>
+      </Card>
+
       <Input
         label="Note (optional)"
         placeholder="Bringing two boards and a clock. Beginners welcome."
@@ -158,6 +171,10 @@ const styles = StyleSheet.create({
   },
   map: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  boardCard: { marginBottom: spacing.lg },
+  boardRow: { flexDirection: 'row', alignItems: 'center' },
+  boardInfo: { flex: 1, marginHorizontal: spacing.sm + 4 },
+  boardTitle: { ...typography.bodyBold, color: colors.textPrimary },
   noteInput: { minHeight: 70, textAlignVertical: 'top' },
   summary: { marginVertical: spacing.md },
   summaryText: { ...typography.caption, color: colors.textSecondary },
