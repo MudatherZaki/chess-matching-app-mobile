@@ -7,6 +7,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '@services/api';
 import {
+  GatheringChatReceiptPayload,
+  GatheringMessageReceivedPayload,
   GatheringUpdatedPayload,
   JoinRequestReceivedPayload,
   JoinRequestResolvedPayload,
@@ -18,6 +20,10 @@ export interface RealtimeHandlers {
   onJoinRequestResolved?: (payload: JoinRequestResolvedPayload) => void;
   onMemberJoined?: (payload: MemberJoinedPayload) => void;
   onGatheringUpdated?: (payload: GatheringUpdatedPayload) => void;
+  onGatheringMessageReceived?: (payload: GatheringMessageReceivedPayload) => void;
+  onGatheringChatReceipt?: (payload: GatheringChatReceiptPayload) => void;
+  // After an automatic reconnect, so screens can catch up on what they missed
+  onReconnected?: () => void;
 }
 
 let connection: HubConnection | null = null;
@@ -52,6 +58,14 @@ export async function startRealtime(handlers: RealtimeHandlers) {
   on('JoinRequestResolved', handlers.onJoinRequestResolved);
   on('MemberJoined', handlers.onMemberJoined);
   on('GatheringUpdated', handlers.onGatheringUpdated);
+  on('GatheringMessageReceived', handlers.onGatheringMessageReceived);
+  on('GatheringChatReceipt', handlers.onGatheringChatReceipt);
+  if (handlers.onReconnected) {
+    const onReconnected = handlers.onReconnected;
+    connection.onreconnected(() => {
+      onReconnected();
+    });
+  }
 
   // Sent by the hub but not used by the app yet; a handler keeps SignalR from
   // warning "No client method with the name ... found" on each one

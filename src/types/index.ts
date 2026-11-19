@@ -176,6 +176,10 @@ export interface Gathering {
   myPendingRequestId?: string;
   // Ended gatherings only: the people you've already reviewed
   reviewedByMe?: string[];
+  // Members only: when the latest chat message was sent
+  lastMessageAt?: string;
+  // Members only: when the latest chat message you've seen was sent
+  myChatReadUpTo?: string;
   createdAt: string;
 }
 
@@ -208,6 +212,39 @@ export interface JoinRequest {
 export interface JoinRequestsResponse {
   requests: JoinRequest[];
   count: number;
+}
+
+// Gathering chat: members only, and only while the gathering is active
+export interface GatheringMessage {
+  id: string;
+  gatheringId: string;
+  sender: GatheringPerson;
+  body: string;
+  createdAt: string;
+}
+
+export interface GatheringMessagesResponse {
+  // Oldest first
+  messages: GatheringMessage[];
+  count: number;
+  // Whether there are older messages before this page
+  hasMore: boolean;
+  canSend: boolean;
+  // How far each member has received and read
+  receipts: ChatReceipt[];
+}
+
+// A member's receipts are the createdAt of the newest message that reached
+// one of their devices, and of the newest one they've seen
+export interface ChatReceipt {
+  member: GatheringPerson;
+  deliveredUpTo?: string;
+  readUpTo?: string;
+}
+
+export interface UpdateChatReceiptRequest {
+  deliveredUpTo?: string;
+  readUpTo?: string;
 }
 
 // Reviews: about the person and the meetup, never chess results. No score.
@@ -296,6 +333,17 @@ export interface GatheringUpdatedPayload {
   memberCount: number;
 }
 
+export interface GatheringChatReceiptPayload {
+  gatheringId: string;
+  userId: string;
+  deliveredUpTo?: string;
+  readUpTo?: string;
+}
+
+export interface GatheringMessageReceivedPayload {
+  message: GatheringMessage;
+}
+
 export interface UserAvailabilityChangedPayload {
   userId: string;
   isAvailable: boolean;
@@ -338,6 +386,7 @@ export type GatheringsStackParamList = {
   GatheringDetail: { gatheringId: string };
   CreateGathering: undefined;
   ReviewGathering: { gatheringId: string };
+  GatheringChat: { gatheringId: string; title?: string };
 };
 
 export type ProfileStackParamList = {

@@ -10,6 +10,8 @@ import {
   NearbyUser,
   UserPublicProfile,
   Gathering,
+  GatheringMessage,
+  GatheringMessagesResponse,
   GatheringPerson,
   JoinRequest,
   JoinRequestStatus,
@@ -212,6 +214,7 @@ export const MOCK_USER: User = {
 const answered = new Map<string, JoinRequestStatus>();
 const myRequests = new Map<string, JoinRequest>();
 const closed = new Set<string>();
+const mockMessages = new Map<string, GatheringMessage[]>();
 
 const buildGathering = (g: GatheringSeed): Gathering => {
   const members = [g.mine ? ME : person(g.host), ...g.guests.map(person)];
@@ -278,6 +281,29 @@ export const mockApi = {
     };
     myRequests.set(request.id, request);
     return request;
+  },
+
+  messages(gatheringId: string): GatheringMessagesResponse {
+    const messages = mockMessages.get(gatheringId) ?? [];
+    return {
+      messages,
+      count: messages.length,
+      hasMore: false,
+      canSend: !closed.has(gatheringId),
+      receipts: [],
+    };
+  },
+
+  sendMessage(gatheringId: string, body: string): GatheringMessage {
+    const message: GatheringMessage = {
+      id: `mock-message-${Date.now()}`,
+      gatheringId,
+      sender: ME,
+      body,
+      createdAt: new Date().toISOString(),
+    };
+    mockMessages.set(gatheringId, [...(mockMessages.get(gatheringId) ?? []), message]);
+    return message;
   },
 
   withdraw(requestId: string) {

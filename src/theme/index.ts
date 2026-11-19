@@ -31,6 +31,9 @@ export const colors = {
   borderLight: '#1D252E',
 
   overlay: 'rgba(0, 0, 0, 0.6)',
+
+  // Read ticks, drawn on your own (primary green) chat bubbles
+  receiptRead: '#0B57D0',
 };
 
 export const spacing = {

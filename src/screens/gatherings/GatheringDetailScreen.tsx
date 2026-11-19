@@ -7,10 +7,12 @@ import { Gathering, GatheringPerson, GatheringsStackParamList } from '@/types';
 import { apiClient } from '@/services/api';
 import { useGatheringStore } from '@/store/gatheringStore';
 import { useAuthStore } from '@/store/authStore';
+import { hasUnread, useChatStore } from '@/store/chatStore';
 import {
   Avatar,
   Button,
   Card,
+  IconTile,
   Input,
   LoadingSpinner,
   RatingBadge,
@@ -30,6 +32,8 @@ export default function GatheringDetailScreen({ route, navigation }: Props) {
   const store = useGatheringStore();
   const myId = useAuthStore(s => s.user?.id);
   const requests = store.requestsToApprove.filter(r => r.gatheringId === gatheringId);
+  const unreadChat = useChatStore(s => hasUnread(s, gatheringId));
+  const noteChat = useChatStore(s => s.noteGathering);
 
   const [gathering, setGathering] = useState<Gathering | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,14 +42,16 @@ export default function GatheringDetailScreen({ route, navigation }: Props) {
 
   const load = useCallback(async () => {
     try {
-      setGathering(await apiClient.getGathering(gatheringId));
+      const loaded = await apiClient.getGathering(gatheringId);
+      setGathering(loaded);
+      noteChat(gatheringId, loaded.lastMessageAt, loaded.myChatReadUpTo);
     } catch (e: any) {
       Alert.alert('Gathering unavailable', e?.response?.data?.message || 'It may have been cancelled.');
       navigation.goBack();
     } finally {
       setLoading(false);
     }
-  }, [gatheringId, navigation]);
+  }, [gatheringId, navigation, noteChat]);
 
   useFocusEffect(
     useCallback(() => {
@@ -125,6 +131,35 @@ export default function GatheringDetailScreen({ route, navigation }: Props) {
           <Button title="Directions" icon="navigation-variant" variant="outline" onPress={openMaps} style={styles.top} />
         )}
       </Card>
+
+      {gathering.isMember && (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={unreadChat ? 'Group chat, new messages' : 'Group chat'}
+          onPress={() =>
+            navigation.navigate('GatheringChat', {
+              gatheringId: gathering.id,
+              title: gathering.venueName,
+            })
+          }>
+          <Card style={[styles.section, styles.chatRow]}>
+            <IconTile icon="chat-outline" color={unreadChat ? colors.primary : colors.textSecondary} />
+            <View style={styles.chatInfo}>
+              <Text style={styles.cardTitle}>Group chat</Text>
+              <Text style={[styles.hint, unreadChat && styles.unreadHint]}>
+                {unreadChat
+                  ? 'New messages'
+                  : active
+                    ? 'Sort out the details with everyone here'
+                    : 'Read-only now that it’s over'}
+              </Text>
+            </View>
+            {unreadChat && <View style={styles.unreadDot} />}
+            <Icon name="chevron-right" size={22} color={colors.textTertiary} />
+          </Card>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.section}>
         <SectionHeader
@@ -302,6 +337,16 @@ const styles = StyleSheet.create({
   note: { ...typography.body, color: colors.textPrimary, marginTop: spacing.md },
   hint: { ...typography.caption, color: colors.textSecondary, marginVertical: spacing.xs },
   cardTitle: { ...typography.h3, color: colors.textPrimary },
+  chatRow: { flexDirection: 'row', alignItems: 'center' },
+  chatInfo: { flex: 1, marginHorizontal: spacing.sm + 4 },
+  unreadHint: { color: colors.primary, fontWeight: '600' },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+    marginRight: spacing.sm,
+  },
   quote: { ...typography.body, color: colors.textPrimary, fontStyle: 'italic', marginTop: spacing.sm },
   request: { marginBottom: spacing.md },
   actions: { flexDirection: 'row', marginTop: spacing.sm },

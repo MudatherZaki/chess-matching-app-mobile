@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/store/authStore';
 import { useGatheringStore } from '@/store/gatheringStore';
+import { useChatStore } from '@/store/chatStore';
 import { startRealtime, stopRealtime } from '@/services/realtime';
 import {
   RootStackParamList,
@@ -43,6 +44,7 @@ import GatheringsListScreen from '@/screens/gatherings/GatheringsListScreen';
 import GatheringDetailScreen from '@/screens/gatherings/GatheringDetailScreen';
 import CreateGatheringScreen from '@/screens/gatherings/CreateGatheringScreen';
 import ReviewGatheringScreen from '@/screens/gatherings/ReviewGatheringScreen';
+import GatheringChatScreen from '@/screens/gatherings/GatheringChatScreen';
 
 // Profile stack screens
 import ProfileScreen from '@/screens/profile/ProfileScreen';
@@ -144,6 +146,11 @@ const GatheringsStackNavigator = () => (
       component={ReviewGatheringScreen}
       options={{ headerTitle: 'How Did It Go?' }}
     />
+    <GatheringsStack.Screen
+      name="GatheringChat"
+      component={GatheringChatScreen}
+      options={{ headerTitle: 'Group Chat' }}
+    />
   </GatheringsStack.Navigator>
 );
 
@@ -178,6 +185,7 @@ const AppTabNavigator = () => {
   const requestCount = useGatheringStore(s => s.requestsToApprove.length);
   const fetchRequests = useGatheringStore(s => s.fetchRequests);
   const fetchMine = useGatheringStore(s => s.fetchMine);
+  const userId = useAuthStore(s => s.user?.id);
   // A fixed height overrides the tab bar's own safe-area padding, so add the
   // home-indicator inset back in
   const { bottom } = useSafeAreaInsets();
@@ -209,9 +217,19 @@ const AppTabNavigator = () => {
         fetchMine().catch(() => {});
       },
       onMemberJoined: setJoined,
-      onGatheringUpdated: () => {
+      onGatheringUpdated: ({ gatheringId }) => {
         refresh();
         fetchMine().catch(() => {});
+        // Someone joined or left: the open chat's receipts need their names
+        const { openChatId, load } = useChatStore.getState();
+        if (openChatId === gatheringId) load(gatheringId).catch(() => {});
+      },
+      onGatheringMessageReceived: ({ message }) => useChatStore.getState().receive(message),
+      onGatheringChatReceipt: payload => useChatStore.getState().applyReceipt(payload),
+      // Messages sent while the connection was down never arrive as events
+      onReconnected: () => {
+        const { openChatId, load } = useChatStore.getState();
+        if (openChatId) load(openChatId).catch(() => {});
       },
     });
     return () => {
@@ -219,11 +237,21 @@ const AppTabNavigator = () => {
     };
   }, [emailVerified, fetchRequests, fetchMine]);
 
+  // Chat state belongs to the signed-in account and is dropped on sign-out
+  useEffect(() => {
+    if (!userId) return;
+    useChatStore.getState().setUser(userId);
+    return () => useChatStore.getState().reset();
+  }, [userId]);
+
   return (
     <View style={{ flex: 1 }}>
       <AppTabs.Navigator
         screenOptions={({ route }: { route: { name: keyof AppTabParamList } }) => ({
           headerShown: false,
+          // Android resizes the window for the keyboard, which would otherwise
+          // lift the tab bar above it and squeeze screens like the chat
+          tabBarHideOnKeyboard: true,
           tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <Icon name={TAB_ICONS[route.name]} size={focused ? 26 : 24} color={color} />
           ),

@@ -9,7 +9,10 @@ import {
   CreateGatheringRequest,
   CreateReviewRequest,
   Gathering,
+  GatheringMessage,
+  GatheringMessagesResponse,
   GatheringsResponse,
+  UpdateChatReceiptRequest,
   JoinRequest,
   JoinRequestsResponse,
   ReviewListResponse,
@@ -316,6 +319,29 @@ class ApiClient {
   async cancelGathering(gatheringId: string): Promise<void> {
     if (USE_MOCK_DATA && isMockId(gatheringId)) return mockApi.end(gatheringId);
     await this.instance.post(`/api/v1/gatherings/${gatheringId}/cancel`, {});
+  }
+
+  // ===== GATHERING CHAT =====
+
+  // The latest page, or the page before `before` (an earlier message's
+  // createdAt, passed back exactly as the server sent it)
+  async getGatheringMessages(gatheringId: string, before?: string): Promise<GatheringMessagesResponse> {
+    if (USE_MOCK_DATA && isMockId(gatheringId)) return mockApi.messages(gatheringId);
+    const response = await this.instance.get(`/api/v1/gatherings/${gatheringId}/messages`, {
+      params: { before },
+    });
+    return response.data;
+  }
+
+  async sendGatheringMessage(gatheringId: string, body: string): Promise<GatheringMessage> {
+    if (USE_MOCK_DATA && isMockId(gatheringId)) return mockApi.sendMessage(gatheringId, body);
+    const response = await this.instance.post(`/api/v1/gatherings/${gatheringId}/messages`, { body });
+    return response.data;
+  }
+
+  async updateChatReceipt(gatheringId: string, receipt: UpdateChatReceiptRequest): Promise<void> {
+    if (USE_MOCK_DATA && isMockId(gatheringId)) return;
+    await this.instance.post(`/api/v1/gatherings/${gatheringId}/messages/receipt`, receipt);
   }
 
   // Pending requests to join gatherings you're in
